@@ -3,11 +3,90 @@ var express = require('express');
 const app = express();
 const config = require('../dbconfig.js');
 
-// GET las preguntas frecuenteas---------------------------------------------
+// GET las preguntas frecuentes---------------------------------------------
 app.get("/FAQ", async function(req , res){
     let pool = await sql.connect(config)
     const result = await pool.request().query('select * from FAQ');
     res.json(result.recordsets[0]);
+});
+
+// POST nueva pregunta frecuente---------------------------------------------
+app.post("/FAQ/add", async function(req , res){
+    sql.connect(config, (err )=> {
+        var FAQ = {
+            Pregunta: req.body.Pregunta,
+            Respuesta: req.body.Respuesta,
+            Status: true
+        }
+
+        let request = new sql.Request();
+        let cols = [];
+        let inputs = [];
+        for (let k in FAQ) {
+            request.input(k, FAQ[k]);
+            cols.push(k);
+            inputs.push('@' + k);
+        }
+
+        let query = `Insert into FAQ (${cols.toString()}) OUTPUT Inserted.Id values (${inputs.toString()})`;
+        request.query(query, (err, resolve) => {
+            err ? console.log(err) : res.send(resolve['recordset'][0]);
+        });
+
+    }); 
+});
+
+// PUT editar pregunta frecuente---------------------------------------------
+app.post("/FAQ/edit", async function(req , res){
+    sql.connect(config, (err )=> {
+
+        const Id = req.body.Id;
+
+        var FAQ = {
+            Pregunta: req.body.Pregunta,
+            Respuesta: req.body.Respuesta,
+            Status: true
+        }
+
+
+        let request = new sql.Request();
+        let cambios = '';
+        let contador = 0;
+        for (let k in FAQ) {
+            contador == 0 
+            ?
+            cambios += `${k} = '${FAQ[k]}',`
+            :
+                contador == 1 
+                ?
+                cambios += ` ${k} = '${FAQ[k]}'`
+                :
+                cambios += `, ${k} = '${FAQ[k]}'`
+            ++contador
+        }
+
+        let query = `update FAQ set ${cambios} OUTPUT Inserted.Id where Id = ${Id}`;
+        request.query(query, (err, resolve) => {
+            err ? console.log(err) : res.send(resolve['recordset'][0]);
+        });
+
+    }); 
+});
+
+
+// DELETE editar pregunta frecuente---------------------------------------------
+app.post("/FAQ/delete", async function(req , res){
+    sql.connect(config, (err )=> {
+
+        const Id = req.body.Id;
+        let request = new sql.Request();
+
+        let query = `Delete from FAQ where Id = ${Id}`;
+        request.query(query, (err, resolve) => {
+            err ? console.log(err) : res.send(JSON.stringify(resolve['rowsAffected'][0]));
+        });
+
+    }); 
 });
 
 

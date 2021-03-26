@@ -16,8 +16,11 @@ app.post("/FAQ/add", async function(req , res){
         var FAQ = {
             Pregunta: req.body.Pregunta,
             Respuesta: req.body.Respuesta,
-            Status: true
+            Status: req.body.Status
         }
+
+        
+        console.log(req.body.Status)
 
         let request = new sql.Request();
         let cols = [];
@@ -45,7 +48,7 @@ app.post("/FAQ/edit", async function(req , res){
         var FAQ = {
             Pregunta: req.body.Pregunta,
             Respuesta: req.body.Respuesta,
-            Status: true
+            Status: req.body.Status
         }
 
 

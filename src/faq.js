@@ -6,7 +6,7 @@ const config = require('../dbconfig.js');
 // GET las preguntas frecuentes---------------------------------------------
 app.get("/FAQ", async function(req , res){
     let pool = await sql.connect(config)
-    const result = await pool.request().query('select * from FAQ');
+    const result = await pool.request().query('select * from FAQ order by Orden');
     res.json(result.recordsets[0]);
 });
 
@@ -16,11 +16,9 @@ app.post("/FAQ/add", async function(req , res){
         var FAQ = {
             Pregunta: req.body.Pregunta,
             Respuesta: req.body.Respuesta,
-            Status: req.body.Status
+            Status: req.body.Status,
+            Orden: req.body.Orden
         }
-
-        
-        console.log(req.body.Status)
 
         let request = new sql.Request();
         let cols = [];
@@ -91,6 +89,32 @@ app.post("/FAQ/delete", async function(req , res){
 
     }); 
 });
+
+app.post("/FAQ/editOrder", async function(req , res){
+    sql.connect(config, (err )=> {
+        
+        const faqs = req.body;
+        
+        let cambios = '';
+        cambios = faqs.map( (faq, i) => {
+            return cambios + `WHEN ${faq.Id} THEN ${i+1} ` 
+        })
+
+        const concatenacion = (acumulador, valorActual) => acumulador + valorActual;
+        cambios.reduce(concatenacion);
+
+    
+            
+        let request = new sql.Request();
+        let query = `UPDATE FAQ SET Orden = CASE Id ${cambios}END`;
+        query = query.replace(/,/g, '')
+
+        request.query(query, (err, resolve) => {
+            err ? console.log(err) : res.send(resolve);
+        });
+    }); 
+});
+
 
 
 
